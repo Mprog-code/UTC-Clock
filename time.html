@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Time Display</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: black;
+      color: limegreen;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start; /* Align left instead of center */
+      height: 100vh;
+      font-family: monospace;
+      padding-left: 5%; /* add some margin from the left edge */
+    }
+    .time-box {
+      font-size: 5em;
+      margin: 20px 0;
+    }
+    .label {
+      font-size: 1.5em;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="time-box">
+    <div class="label">UTC Time</div>
+    <div id="utc-time"></div>
+  </div>
+  <div class="time-box">
+    <div class="label">UAE Time (GST)</div>
+    <div id="uae-time"></div>
+  </div>
+
+  <script>
+    function updateTime() {
+      const now = new Date();
+
+      // UTC time
+      document.getElementById("utc-time").textContent = 
+        now.toUTCString().split(" ")[4];
+
+      // UAE time (UTC+4, no DST)
+      const uae = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Dubai" }));
+      document.getElementById("uae-time").textContent = 
+        uae.toTimeString().split(" ")[0];
+    }
+
+    setInterval(updateTime, 1000);
+    updateTime();
+  </script>
+</body>
+</html>
