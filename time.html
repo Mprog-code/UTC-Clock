@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Time Display</title>
+  <title>UTC & UAE Time (NTP Synced)</title>
   <style>
     body {
       margin: 0;
@@ -11,10 +11,10 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
-      align-items: flex-start; /* Align left instead of center */
+      align-items: flex-start;
       height: 100vh;
       font-family: monospace;
-      padding-left: 5%; /* add some margin from the left edge */
+      padding-left: 5%;
     }
     .time-box {
       font-size: 5em;
@@ -24,34 +24,68 @@
       font-size: 1.5em;
       color: white;
     }
+    .status {
+      font-size: 1em;
+      color: gray;
+      margin-top: 10px;
+    }
+    .error {
+      color: red;
+    }
   </style>
 </head>
 <body>
   <div class="time-box">
     <div class="label">UTC Time</div>
-    <div id="utc-time"></div>
+    <div id="utc-time">--:--:--</div>
   </div>
+
   <div class="time-box">
-    <div class="label">UAE Time (GST)</div>
-    <div id="uae-time"></div>
+    <div class="label">UAE Time</div>
+    <div id="uae-time">--:--:--</div>
   </div>
+
+  <div id="status" class="status">Connecting to time server...</div>
 
   <script>
-    function updateTime() {
-      const now = new Date();
+    
+    const API_URL = "http://10.170.1.207:5000/api/time";
 
-      // UTC time
-      document.getElementById("utc-time").textContent = 
-        now.toUTCString().split(" ")[4];
 
-      // UAE time (UTC+4, no DST)
-      const uae = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Dubai" }));
-      document.getElementById("uae-time").textContent = 
-        uae.toTimeString().split(" ")[0];
+    async function fetchTimeFromServer() {
+      const statusEl = document.getElementById("status");
+      const utcEl = document.getElementById("utc-time");
+      const uaeEl = document.getElementById("uae-time");
+
+      try {
+        const response = await fetch(API_URL, { cache: "no-store" });
+
+        if (!response.ok) {
+          throw new Error("API error: " + response.status);
+        }
+
+        const data = await response.json();
+
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        utcEl.textContent = data.utc || "--:--:--";
+        uaeEl.textContent = data.uae || "--:--:--";
+        statusEl.textContent = "Time synced with NTP backend ✔";
+        statusEl.classList.remove("error");
+      } catch (err) {
+        console.error("Failed to fetch time:", err);
+        statusEl.textContent = "Failed to contact NTP backend ✖";
+        statusEl.classList.add("error");
+        utcEl.textContent = "--:--:--";
+        uaeEl.textContent = "--:--:--";
+      }
     }
 
-    setInterval(updateTime, 1000);
-    updateTime();
+    // Call immediately, then every second
+    fetchTimeFromServer();
+    setInterval(fetchTimeFromServer, 1000);
   </script>
 </body>
 </html>
